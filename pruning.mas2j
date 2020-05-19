@@ -1,0 +1,12 @@
+MAS pruning {
+
+	infrastructure: Centralised
+
+	environment: PruningEnv
+
+	agents:
+		bob pruner_agent;
+
+	aslSourcePath:
+		"src/asl";
+}
