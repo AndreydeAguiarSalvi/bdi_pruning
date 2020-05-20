@@ -31,7 +31,10 @@ public class PruningEnv extends Environment {
     @Override
     public boolean executeAction(String agName, Structure action) {
     	System.out.println("\tAgent "+agName+" is doing "+action);
-    	clearPercepts();
+//    	clearPercepts();
+    	removePercept("bob", remainL);
+    	removePercept("bob", undoPruning);
+    	removePercept("bob", trainAgain);
         
         /* Performing the actions */
         if (action.getFunctor().equals("make_prune")) {
