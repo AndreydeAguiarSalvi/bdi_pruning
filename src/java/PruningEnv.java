@@ -12,12 +12,9 @@ public class PruningEnv extends Environment {
     private Logger logger = Logger.getLogger("pruning."+PruningEnv.class.getName());
     
     private Literal remainL = Literal.parseLiteral("remaingLayers");
-    private Literal notRemainL = Literal.parseLiteral("~remaingLayers");
     
     private Literal undoPruning = Literal.parseLiteral("decreasePerformance");
-    private Literal keepPruning = Literal.parseLiteral("~decreasePerformance");
     
-    private Literal keepUntrained = Literal.parseLiteral("~trainAgain");
     private Literal trainAgain = Literal.parseLiteral("trainAgain");
     
     private Model M;
@@ -28,13 +25,6 @@ public class PruningEnv extends Environment {
     @Override
     public void init(String[] args) {
         super.init(args);
-        try {
-        	addPercept(this.remainL);
-        	addPercept(this.keepPruning);
-        	addPercept(this.keepUntrained);
-        } catch (Exception e){
-        	System.out.println(e.getStackTrace());
-        }
         this.M = new Model();
     }
 
@@ -55,13 +45,13 @@ public class PruningEnv extends Environment {
         	if (this.continue_pruning && this.counter <= 12) { // After, continue_pruning
         		System.out.println("\t1");
         		addPercept(this.remainL);
-        		addPercept(this.keepPruning);
-        		addPercept(this.keepUntrained);
+//        		addPercept(this.keepPruning);
+//        		addPercept(this.keepUntrained);
         	} else if (!this.continue_pruning && this.counter <= 12) { // After, undo_prune
         		System.out.println("\t2");
         		addPercept(this.remainL);
         		addPercept(this.undoPruning);
-        		addPercept(this.keepUntrained);
+//        		addPercept(this.keepUntrained);
         	} else if (this.continue_pruning && this.counter > 12) { // after, train
         		System.out.println("\t3");
         		addPercept(this.remainL);
@@ -69,7 +59,7 @@ public class PruningEnv extends Environment {
         		addPercept(this.trainAgain);
         	} else if (!this.continue_pruning && this.counter > 12) { // After, just_end
         		System.out.println("\t4");
-        		addPercept(this.notRemainL);
+//        		addPercept(this.notRemainL);
         		try {
         			TimeUnit.MINUTES.sleep(5);
         		} catch (Exception e) {
