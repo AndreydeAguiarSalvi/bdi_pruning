@@ -10,13 +10,16 @@ import java.util.concurrent.TimeUnit;
 public class PruningEnv extends Environment {
 
     private Logger logger = Logger.getLogger("pruning."+PruningEnv.class.getName());
-    
+
     private Literal remainL = Literal.parseLiteral("remaingLayers");
-    
+    private Literal notRemainL = Literal.parseLiteral("~remaingLayers");
+
     private Literal undoPruning = Literal.parseLiteral("decreasePerformance");
-    
+    private Literal keepPruning = Literal.parseLiteral("~decreasePerformance");
+
+    private Literal keepUntrained = Literal.parseLiteral("~trainAgain");
     private Literal trainAgain = Literal.parseLiteral("trainAgain");
-    
+
     private Model M;
     private int counter = 0;
     private boolean continue_pruning = true;
@@ -26,13 +29,12 @@ public class PruningEnv extends Environment {
     @Override
     public void init(String[] args) {
         super.init(args);
-        this.M = new Model();
     }
 
     @Override
     public boolean executeAction(String agName, Structure action) {
     	System.out.println("\tAgent "+agName+" is doing "+action);
-
+    	
     	if (this.stop) {
     		try {
     			TimeUnit.MINUTES.sleep(5);
@@ -42,23 +44,29 @@ public class PruningEnv extends Environment {
     	}
     	
     	removePercept("bob", remainL);
+    	removePercept("bob", notRemainL);
     	removePercept("bob", undoPruning);
+    	removePercept("bob", keepPruning);
     	removePercept("bob", trainAgain);
-        
+    	removePercept("bob", keepUntrained);
+
         /* Performing the actions */
         if (action.getFunctor().equals("make_prune")) {
         	prune();
-        	
+
         } else if (action.getFunctor().equals("verify")) {
         	this.continue_pruning = evaluatePerformance();
-        	
+
         	if (this.continue_pruning && this.counter <= 12) { // After, continue_pruning
         		System.out.println("\tcounter: " + this.counter + " verify_case: 1");
         		addPercept(this.remainL);
+        		addPercept(this.keepPruning);
+        		addPercept(this.keepUntrained);
         	} else if (!this.continue_pruning && this.counter <= 12) { // After, undo_prune
         		System.out.println("\tcounter: " + this.counter + " verify_case: 2");
         		addPercept(this.remainL);
         		addPercept(this.undoPruning);
+        		addPercept(this.keepUntrained);
         	} else if (this.continue_pruning && this.counter > 12) { // after, train
         		System.out.println("\tcounter: " + this.counter + " verify_case: 3");
         		addPercept(this.remainL);
@@ -66,20 +74,23 @@ public class PruningEnv extends Environment {
         		addPercept(this.trainAgain);
         	} else if (!this.continue_pruning && this.counter > 12) { // After, just_end
         		System.out.println("\tcounter: " + this.counter + " verify_case: 4");
+        		addPercept(this.notRemainL);
         		this.stop = true;
         	}
-        	
+
         } else if (action.getFunctor().equals("train")) {
-        
+
     	} else if (action.getFunctor().equals("undo_prune")) {
-        	
+
+
         } else if (action.getFunctor().equals("continue_pruning")) {
-        	
+
+
         } else if (action.getFunctor().equals("just_end")) {
         	System.out.println("\tProcesso finalizado");
-        	
+
         }
-         
+
         return true;
     }
 

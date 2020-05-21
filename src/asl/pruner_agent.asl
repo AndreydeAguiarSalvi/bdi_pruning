@@ -4,12 +4,9 @@
 
 remaingLayers. /* I belief that there even are layers to prune */
 
-/*
- * Another possible beliefs
- * 		decreasePerformance. -> I belief that pruning decrease the performance
- * 		trainAgain. -> I belief that is necessary to train the model again
- */
+~decreasePerformance. /* I belief that pruning will not decrease the performance */
 
+~trainAgain. /* I belief that is not necessary to train the model again */
 
 /* Initial goals */
 !prune.
@@ -25,10 +22,10 @@ remaingLayers. /* I belief that there even are layers to prune */
 +!decide: decreasePerformante & trainAgain <- .print("Treine novamente"); train; !prune.
 
 
-+!decide: decreasePerformance & not trainAgain <- .print("Aumente a performance"); undo_prune; !prune.
++!decide: decreasePerformance & ~trainAgain <- .print("Aumente a performance"); undo_prune; !prune.
 
 
-+!decide: not decreasePerformance <- .print("Continue com o pruning"); continue_pruning; !prune.
++!decide: ~decreasePerformance <- .print("Continue com o pruning"); continue_pruning; !prune.
 
 
-+!decide: not remaingLayers <- .print("O processo acabou"); just_end.
++!decide: ~remaingLayers <- .print("O processo acabou"); just_end. 
