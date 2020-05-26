@@ -1,11 +1,8 @@
 // Agent sample_agent in project pruning
 
-/* Initial beliefs and rules */
-
-remaingLayers. /* I belief that there even are layers to prune */
-
 /*
- * Another possible beliefs
+ * All possible beliefs
+ * 		remainLayers. -> I belief that remains layers to prune
  * 		decreasePerformance. -> I belief that pruning decrease the performance
  * 		trainAgain. -> I belief that is necessary to train the model again
  */
@@ -22,13 +19,13 @@ remaingLayers. /* I belief that there even are layers to prune */
 +!verifyPerformance <- .print("Reavaliando modelo"); verify; !decide.
 
 
-+!decide: decreasePerformante & trainAgain <- .print("Treine novamente"); train; !prune.
++!decide: not remaingLayers <- .print("O processo acabou"); just_end.
+
+
++!decide: decreasePerformance & trainAgain <- .print("Treine novamente"); train; !prune.
 
 
 +!decide: decreasePerformance & not trainAgain <- .print("Aumente a performance"); undo_prune; !prune.
 
 
 +!decide: not decreasePerformance <- .print("Continue com o pruning"); continue_pruning; !prune.
-
-
-+!decide: not remaingLayers <- .print("O processo acabou"); just_end.

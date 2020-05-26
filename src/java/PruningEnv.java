@@ -2,6 +2,8 @@
 
 import jason.asSyntax.*;
 import jason.environment.*;
+import jason.jeditplugin.AgentSpeakSideKickParser;
+
 import java.util.logging.*;
 
 import java.util.ArrayList;
@@ -13,7 +15,7 @@ public class PruningEnv extends Environment {
     
     private Literal remainL = Literal.parseLiteral("remaingLayers");
     
-    private Literal undoPruning = Literal.parseLiteral("decreasePerformance");
+    private Literal undoPruning = Literal.parseLiteral("decreasePerformante");
     
     private Literal trainAgain = Literal.parseLiteral("trainAgain");
     
@@ -26,6 +28,7 @@ public class PruningEnv extends Environment {
     @Override
     public void init(String[] args) {
         super.init(args);
+        addPercept(this.remainL);
         this.M = new Model();
     }
 
@@ -40,16 +43,16 @@ public class PruningEnv extends Environment {
 
     		}
     	}
-    	
-    	removePercept("bob", remainL);
-    	removePercept("bob", undoPruning);
-    	removePercept("bob", trainAgain);
         
         /* Performing the actions */
         if (action.getFunctor().equals("make_prune")) {
         	prune();
         	
         } else if (action.getFunctor().equals("verify")) {
+        	clearAllPercepts();
+//        	removePercept("bob", remainL);
+//        	removePercept("bob", undoPruning);
+//        	removePercept("bob", trainAgain);
         	this.continue_pruning = evaluatePerformance();
         	
         	if (this.continue_pruning && this.counter <= 12) { // After, continue_pruning
@@ -79,7 +82,7 @@ public class PruningEnv extends Environment {
         	System.out.println("\tProcesso finalizado");
         	
         }
-         
+        informAgsEnvironmentChanged("bob"); 
         return true;
     }
 
