@@ -28,4 +28,4 @@
 +!decide: decreasePerformance & not trainAgain <- .print("Aumente a performance"); undo_prune; !prune.
 
 
-+!decide: not decreasePerformance <- .print("Continue com o pruning"); continue_pruning; !prune.
++!decide: not decreasePerformance <- .print("Continue com o pruning"); !prune.
