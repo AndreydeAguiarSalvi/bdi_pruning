@@ -2,7 +2,7 @@
 
 /*
  * All possible beliefs
- * 		remainLayers. -> I belief that remains layers to prune
+ * 		remaingLayers. -> I belief that remains layers to prune
  * 		decreasePerformance. -> I belief that pruning decrease the performance
  * 		trainAgain. -> I belief that is necessary to train the model again
  */

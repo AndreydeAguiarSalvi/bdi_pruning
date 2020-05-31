@@ -15,7 +15,7 @@ public class PruningEnv extends Environment {
     
     private Literal remainL = Literal.parseLiteral("remaingLayers");
     
-    private Literal undoPruning = Literal.parseLiteral("decreasePerformante");
+    private Literal undoPruning = Literal.parseLiteral("decreasePerformance");
     
     private Literal trainAgain = Literal.parseLiteral("trainAgain");
     
@@ -35,14 +35,6 @@ public class PruningEnv extends Environment {
     @Override
     public boolean executeAction(String agName, Structure action) {
     	System.out.println("\tAgent "+agName+" is doing "+action);
-
-    	if (this.stop) {
-    		try {
-    			TimeUnit.MINUTES.sleep(5);
-    		} catch (Exception e) {
-
-    		}
-    	}
         
         /* Performing the actions */
         if (action.getFunctor().equals("make_prune")) {
@@ -50,9 +42,7 @@ public class PruningEnv extends Environment {
         	
         } else if (action.getFunctor().equals("verify")) {
         	clearAllPercepts();
-//        	removePercept("bob", remainL);
-//        	removePercept("bob", undoPruning);
-//        	removePercept("bob", trainAgain);
+
         	this.continue_pruning = evaluatePerformance();
         	
         	if (this.continue_pruning && this.counter <= 12) { // After, continue_pruning
@@ -80,7 +70,12 @@ public class PruningEnv extends Environment {
         	
         } else if (action.getFunctor().equals("just_end")) {
         	System.out.println("\tProcesso finalizado");
-        	
+        	try {
+    			TimeUnit.SECONDS.sleep(8);
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}
+        	System.exit(0);
         }
         informAgsEnvironmentChanged("bob"); 
         return true;
