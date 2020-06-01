@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+
 public class PruningEnv extends Environment {
 
     private Logger logger = Logger.getLogger("pruning."+PruningEnv.class.getName());
@@ -26,18 +27,24 @@ public class PruningEnv extends Environment {
     
     private Literal trainAgain = Literal.parseLiteral("trainAgain");
     
-    private Model M;
-    private int counter = 0;
+    
     private boolean continue_pruning = true;
-    private boolean stop = false;
+    private Model model;
     private Process process;
+    private int counter = 0;
 
     /** Called before the MAS execution with the args informed in .mas2j */
     @Override
     public void init(String[] args) {
         super.init(args);
         addPercept(this.remainL);
-        this.M = new Model();
+        
+        // Training the neural network by first time
+        runCommand("python environment\\test.py");
+        
+        // Loading the CNN configuration and instantiating Model
+        CSV m = new CSV("wrapping\\model.csv");
+        this.model = new Model(m);
     }
 
     @Override
@@ -56,25 +63,29 @@ public class PruningEnv extends Environment {
         	if (this.continue_pruning && this.counter <= 12) { // After, continue_pruning
         		System.out.println("\tcounter: " + this.counter + " verify_case: 1");
         		addPercept(this.remainL);
+        	
         	} else if (!this.continue_pruning && this.counter <= 12) { // After, undo_prune
         		System.out.println("\tcounter: " + this.counter + " verify_case: 2");
         		addPercept(this.remainL);
         		addPercept(this.undoPruning);
+        	
         	} else if (this.continue_pruning && this.counter > 12) { // after, train
         		System.out.println("\tcounter: " + this.counter + " verify_case: 3");
         		addPercept(this.remainL);
         		addPercept(this.undoPruning);
         		addPercept(this.trainAgain);
+        	
         	} else if (!this.continue_pruning && this.counter > 12) { // After, just_end
         		System.out.println("\tcounter: " + this.counter + " verify_case: 4");
-        		this.stop = true;
+
         	}
         	
         } else if (action.getFunctor().equals("train")) {
-//        	runCommand("cmd cd environment && python test.py");
-//        	runCommand("cmd python -m environment\test.py");
-    	} else if (action.getFunctor().equals("undo_prune")) {
+        	runCommand("python environment\\test.py");
+    	
+        } else if (action.getFunctor().equals("undo_prune")) {
     		undoPrune();
+        
         } else if (action.getFunctor().equals("just_end")) {
         	System.out.println("\tProcesso finalizado");
         	try {
@@ -84,6 +95,7 @@ public class PruningEnv extends Environment {
     		}
         	System.exit(0);
         }
+        
         informAgsEnvironmentChanged("bob"); 
         return true;
     }
@@ -97,29 +109,12 @@ public class PruningEnv extends Environment {
     public void runCommand(String command) {
     	
     	try {
-    		// Trying with Runtime
+    		// Using runtime to run python
     		this.process = Runtime.getRuntime().exec(command);
-//            this.process.waitFor();
-            
-        	// Trying with ProcessBuilder
-//            ProcessBuilder pb = new ProcessBuilder("cmd", "cd environment", "python test.py");
-//       	 	this.process = pb.start();
-       	 
-            BufferedReader reader = new BufferedReader(
-            		new InputStreamReader(this.process.getInputStream())
-            		); 
-            String line; 
-            while((line = reader.readLine()) != null) { 
-                System.out.println(line);
-            } 
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-//        } catch (InterruptedException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
         }
-    
     }
     
     /**
@@ -163,15 +158,18 @@ public class PruningEnv extends Environment {
     }
     
     
-    /*
-     * Implementation of a model
+    /**
+     * Implementation of Model. Controls the which layers/channels will be choosed to prune
+     * @author Andrey de Aguiar Salvi
+     *
      */
     class Model {
     	ArrayList<Layer> layers = new ArrayList();
     	
-    	public Model () {
-    		for (int i = 0; i < 5; i++) {
-    			layers.add(new Layer(15));
+    	public Model (CSV model) {
+    		int size = model.size();
+    		for (int i = 0; i < size; i++) {
+    			layers.add(new Layer( Integer.valueOf(model.get(i, 0)) ));
     		}
     	}
     	
@@ -184,20 +182,22 @@ public class PruningEnv extends Environment {
     	}
     }
     
-    /* 
-     * Implementation of a Layer
+    /**
+     * Implementation of Layers. Encapsulate channels
+     * @author Andrey de Aguiar Salvi
+     *
      */
     class Layer {
-    	ArrayList<Item> channels = new ArrayList();
+    	ArrayList<Channel> channels = new ArrayList();
     	
     	public Layer (int nChannels) {
     		for (int i = 0; i < nChannels; i++) {
-    			Item it = new Item(i, 100.0);
+    			Channel it = new Channel();
     			this.channels.add(it);
     		}
     	}
     	
-    	public Item getChannel(int i) {
+    	public Channel getChannel(int i) {
     		return this.channels.get(i);
     	}
     	
@@ -206,18 +206,24 @@ public class PruningEnv extends Environment {
     	}
     }
     
-    class Item {
-    	public int index;
-    	public double performance;
-    	public int nTimes;
+    /**
+     * Implementation of Channel. Currently saves how many times it was chosen.
+     * @author Andrey de Aguiar Salvi
+     *
+     */
+    class Channel {
+    	int timesChoosen = 0;
     	
-		public Item(int index, double performance) {
-    		this.index = index;
-    		this.performance = performance;
-    		this.nTimes = 0;
+    	public void choose() {
+    		this.timesChoosen++;
     	}
     }
     
+    /**
+     * Class CSV, trying to mitigate the lack of Pandas in Java
+     * @author Andrey de Aguiar Salvi
+     *
+     */
     class CSV {
 
     	private ArrayList<String[]> matrix;
@@ -243,6 +249,10 @@ public class PruningEnv extends Environment {
     		catch(Exception e){
     		    // Handle any I/O problems
     		}
+    	}
+    	
+    	public int size() {
+    		return this.matrix.size();
     	}
     	
     	public String get(int row, int col) {

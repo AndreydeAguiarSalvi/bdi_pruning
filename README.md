@@ -1,4 +1,4 @@
-->**Pontifícia Universidade Católica do Rio Grande do Sul**<-
+-> **Pontifícia Universidade Católica do Rio Grande do Sul** <-
 ->**Autonomous Agents - 2020/02**<-
 
 ->***BDI Pruning***<-

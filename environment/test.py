@@ -1,8 +1,3 @@
-import os
-from stat import *
-
-#def go():
-#    return "Print in python"
-#go()
-
-print("Print in python")
+f = open("test.txt", 'w')
+print("Functionou desgraça", file=f)
+f.close()
