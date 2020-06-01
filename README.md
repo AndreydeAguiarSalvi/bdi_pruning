@@ -1,7 +1,7 @@
-<div align="center">Pontifícia Universidade Católica do Rio Grande do Sul</div>
-**Autonomous Agents - 2020/02**
-
-->***BDI Pruning***<-
+<div  style="font-size:200%"><b>Pontifícia Universidade Católica do Rio Grande do Sul</b></div>
+<div style="font-size:200%"><b>Autonomous Agents - 2020/02</b></div>
+<p></p>
+<div align="center" style="font-size:250%"><b><i>BDI Pruning</i></b></div>
 This repository contains the source code of my work for the discipline.
 
 ## Introduction
