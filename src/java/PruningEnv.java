@@ -40,7 +40,7 @@ public class PruningEnv extends Environment {
         addPercept(this.remainL);
         
         // Training the neural network by first time
-        runCommand("python environment\\test.py");
+        runCommand("python environment\\train.py");
         
         // Loading the CNN configuration and instantiating Model
         CSV m = new CSV("wrapping\\model.csv");
