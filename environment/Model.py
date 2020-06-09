@@ -5,10 +5,10 @@ from collections import OrderedDict
 '''
     Implements a CNN to MNIST
 '''
-class Net1(nn.Module):
+class MNIST_Model(nn.Module):
 
     def __init__(self):
-        super(Net1, self).__init__()
+        super(MNIST_Model, self).__init__()
         self.conv1 = nn.Sequential(
             OrderedDict([
                 ('conv', nn.Conv2d(1, 32, 3, 1)),
@@ -54,10 +54,10 @@ class Net1(nn.Module):
 '''
     Implements a CNN to CIFAR-10
 '''
-class Net2(nn.Module):
+class CIFAR_Model(nn.Module):
 
     def __init__(self):
-        super(Net2, self).__init__()
+        super(CIFAR_Model, self).__init__()
         self.conv1 = nn.Sequential(
             OrderedDict([
                 ('conv', nn.Conv2d(3, 32, 3, 1)),

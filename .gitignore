@@ -2,3 +2,6 @@
 .project
 .classpath
 bin/
+__pycache__/
+*.pth
+data/

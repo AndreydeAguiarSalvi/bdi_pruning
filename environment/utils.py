@@ -1,10 +1,11 @@
 import numpy as np
+import pandas as pd
 import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
-import torch.torchvision.datasets as D
+import torchvision.datasets as D
 import torchvision.transforms as transforms
-import torch.utils.data.DataLoader as DataLoader
+from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 
 
@@ -46,17 +47,17 @@ def create_loaders(which_dataset='CIFAR'):
 
         train_loader = DataLoader(
             train_set, batch_size=64,
-            shuffle=True, num_workers=4,
+            num_workers=4,
             sampler=train_sampler
         )
         valid_loader = DataLoader(
             valid_set, batch_size=64,
-            shuffle=True, num_workers=4,
+            num_workers=4,
             sampler=valid_sampler
         )
         test_loader = DataLoader(
             test_set, batch_size=64,
-            shuffle=False, num_workers=4
+            num_workers=4
         )
         # Classes names
         classes = ('plane', 'car', 'bird', 'cat',
@@ -96,17 +97,17 @@ def create_loaders(which_dataset='CIFAR'):
 
         train_loader = DataLoader(
             train_set, batch_size=64,
-            shuffle=True, num_workers=4,
+            num_workers=4,
             sampler=train_sampler
         )
         valid_loader = DataLoader(
             valid_set, batch_size=64,
-            shuffle=True, num_workers=4,
+            num_workers=4,
             sampler=valid_sampler
         )
         test_loader = DataLoader(
             test_set, batch_size=64,
-            shuffle=False, num_workers=4
+            num_workers=4
         )
         # Classes names
         classes = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9') 
@@ -152,3 +153,21 @@ def create_criterion_optimizer(model):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     return criterion, optimizer
+
+
+def save_as_csv(model):
+    layers = []
+    for i in range(model.conv1[0].weight[0]):
+        layers.append([0, i])
+    
+    for i in range(model.conv2[0].weight[0]):
+        layers.append([1, i])
+
+    for i in range(model.conv3[0].weight[0]):
+        layers.append([2, i])
+
+    for i in range(model.conv4[0].weight[0]):
+        layers.append([3, i])
+    
+    df = pd.DataFrame(layers)
+    df.to_csv('wrapping/model.csv', sep=',')
