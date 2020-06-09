@@ -1,39 +1,32 @@
 import torch
-import torch.torchvision.datasets as D
-import torchvision.transforms as transforms
-import torch.utils.data.DataLoader as DataLoader
+from environment.utils import create_loaders, create_criterion_optimizer 
 
-ARGS = 'CIFAR'
+def train(n_epochs, train_loader, valid_loader, optimizer, criterion, model):
+    for epoch in range(n_epochs): 
+        running_loss = 0.0
+        for i, data in enumerate(train_loader):
+            inputs, labels = data
 
-if ARGS == 'CIFAR':
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
+            # zero the parameter gradients
+            optimizer.zero_grad()
 
-    trainset = D.CIFAR10(root='./data', train=True,
-                                            download=True, transform=transform)
-    train_loader = DataLoader(trainset, batch_size=4,
-                                            shuffle=True, num_workers=2)
+            # forward + backward + optimize
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
 
-    testset = D.CIFAR10(root='./data', train=False,
-                                        download=True, transform=transform)
-    test_loader = DataLoader(testset, batch_size=4,
-                                            shuffle=False, num_workers=2)
+            # print statistics
+            running_loss += loss.item()
+            if i % 2000 == 1999:    # print every 2000 mini-batches
+                print('[%d, %5d] loss: %.3f' %
+                    (epoch + 1, i + 1, running_loss / 2000))
+                running_loss = 0.0
 
-    classes = ('plane', 'car', 'bird', 'cat',
-            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-else:
-    transform = transform.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
+print('Finished Training')
 
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=True, download=True,
-                       transform=transform,
-        batch_size=args.batch_size, shuffle=True, **kwargs))
 
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=False, transform=transform)),
-        batch_size=args.test_batch_size, shuffle=True, **kwargs)
+def test():
+
+
+def main():
