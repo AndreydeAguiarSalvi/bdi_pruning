@@ -1,32 +1,56 @@
 import torch
+import argparse
+import numpy as np
+from environment.pruning import create_mask, apply_mask
 from environment.utils import create_loaders, create_criterion_optimizer 
 
-def train(n_epochs, train_loader, valid_loader, optimizer, criterion, model):
+def train(n_epochs, train_loader, valid_loader, optimizer, criterion, model, mask):
+    running_loss = []
+    best_fitness = np.Inf
     for epoch in range(n_epochs): 
-        running_loss = 0.0
+        train_loss = 0.0
+        model.train()
         for i, data in enumerate(train_loader):
-            inputs, labels = data
+            images, labels = data
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = model(inputs)
+            apply_mask(model, mask)
+            outputs = model(images)
             loss = criterion(outputs, labels)
+            train_loss += loss.item()
             loss.backward()
             optimizer.step()
+        train_loss /= len(train_loader)
+        valid_loss = validation(valid_loader, model, mask, criterion)
+        running_loss.append(train_loss, valid_loss)
 
-            # print statistics
-            running_loss += loss.item()
-            if i % 2000 == 1999:    # print every 2000 mini-batches
-                print('[%d, %5d] loss: %.3f' %
-                    (epoch + 1, i + 1, running_loss / 2000))
-                running_loss = 0.0
-
-print('Finished Training')
+        # Save best model
 
 
-def test():
+    print('Finished Training')
+    if valid_loss < best_fitness:
+        torch.save( model, 'environment/model.pth' )
+        best_fitness = valid_loss
+
+
+def validation(valid_loader, model, mask, criterion):
+    valid_loss = .0
+    model.eval()
+    with torch.no_grad():
+        for images, labels in valid_loader:
+            apply_mask(model, mask)
+            outputs = model(images)
+            valid_loss += criterion(outputs, labels)
+
+        valid_loss /= len(valid_loader)
+    
+    return valid_loss
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--epochs', type=int, default=10)  
+    

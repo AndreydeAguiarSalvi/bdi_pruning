@@ -147,6 +147,7 @@ def plot_images(images, cls_true, label_names, cls_pred=None, save=False, params
     if save: plt.savefig('wrapping/inference.png', transparent=True )
     else: plt.show()
 
+
 def create_criterion_optimizer(model):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
