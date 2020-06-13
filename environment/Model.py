@@ -29,7 +29,13 @@ class MNIST_Model(nn.Module):
         )
         self.conv4 = nn.Sequential(
             OrderedDict([
-                ('conv', nn.Conv2d(64, 16, 3, 1)),
+                ('conv', nn.Conv2d(64, 32, 3, 1)),
+                ('function', nn.LeakyReLU())
+            ])
+        )
+        self.conv5 = nn.Sequential(
+            OrderedDict([
+                ('conv', nn.Conv2d(32, 16, 3, 1)),
                 ('function', nn.LeakyReLU())
             ])
         )
@@ -37,7 +43,7 @@ class MNIST_Model(nn.Module):
         self.linear = nn.Sequential(
             OrderedDict([
                 ('mlp', nn.Linear(1600, 10)),
-                ('function', nn.Softmax())
+                ('function', nn.ReLU())
             ])
         )
     
@@ -46,6 +52,7 @@ class MNIST_Model(nn.Module):
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
+        x = self.conv5(x)
         x = self.pool(x)
         x = self.linear(x.view(-1, 16*10*10))
     
@@ -78,7 +85,13 @@ class CIFAR_Model(nn.Module):
         )
         self.conv4 = nn.Sequential(
             OrderedDict([
-                ('conv', nn.Conv2d(64, 16, 3, 1)),
+                ('conv', nn.Conv2d(64, 32, 3, 1)),
+                ('function', nn.LeakyReLU())
+            ])
+        )
+        self.conv5 = nn.Sequential(
+            OrderedDict([
+                ('conv', nn.Conv2d(32, 16, 3, 1)),
                 ('function', nn.LeakyReLU())
             ])
         )
@@ -86,7 +99,7 @@ class CIFAR_Model(nn.Module):
         self.linear = nn.Sequential(
             OrderedDict([
                 ('mlp', nn.Linear(1600, 10)),
-                ('function', nn.Softmax())
+                ('function', nn.ReLU())
             ])
         )
     
@@ -95,6 +108,7 @@ class CIFAR_Model(nn.Module):
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
+        x = self.conv5(x)
         x = self.pool(x)
         x = self.linear(x.view(-1, 16*10*10))
     
