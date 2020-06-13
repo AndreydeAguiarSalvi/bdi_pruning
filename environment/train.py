@@ -9,13 +9,13 @@ from utils import create_loaders, create_criterion_optimizer, save_as_csv
 def train(n_epochs, train_loader, valid_loader, optimizer, criterion, model, mask):
     running_loss = []
     best_fitness = np.Inf
-    for epoch in range(n_epochs): 
-        print(f"Performing epoch {epoch}")
+    for epoch in range(n_epochs):
         train_loss = 0.0
         model.train()
         for i, data in enumerate(train_loader):
+            if i % 2000 == 0: print(f"Step: {i}")
             images, labels = data
-
+            
             # zero the parameter gradients
             optimizer.zero_grad()
 
@@ -34,9 +34,11 @@ def train(n_epochs, train_loader, valid_loader, optimizer, criterion, model, mas
 
         # Saving last model
         if valid_loss < best_fitness:
-            torch.save( model, 'environment/model.pth' )
-            torch.save( model, 'environment/mask.pth' )
+            torch.save( model, 'environment\\model.pth' )
+            torch.save( model, 'environment\\mask.pth' )
             best_fitness = valid_loss
+    
+    return best_fitness
 
 
 def validation(valid_loader, model, mask, criterion):
@@ -63,21 +65,24 @@ if __name__ == '__main__':
 
     if args['dataset'] == 'CIFAR':
         model = CIFAR_Model()
-        train_loader, valid_loader, _, _ = create_loaders()
+        train_loader, valid_loader, _, _ = create_loaders(is_train=True, is_valid=True, is_test=False)
     else:
         model = MNIST_Model()
-        train_loader, valid_loader, _, _ = create_loaders(which_dataset='MNIST')
+        train_loader, valid_loader, _, _ = create_loaders(which_dataset='MNIST', is_train=True, is_valid=True, is_test=False)
 
     mask = create_mask(model)
 
     if args['first_time']:
-        torch.save(model, 'environment/initial_model.pth')
-        torch.save(mask, 'environment/mask.pth')
+        torch.save(model, 'environment\\initial_model.pth')
+        torch.save(mask, 'environment\\initial_mask.pth')
         save_as_csv(model)
     else:
-        model.load_state_dict( torch.load('environment/initial_model.pth') )
-        mask.load_state_dict( torch.load('environment/mask.pth') )
+        model.load_state_dict( torch.load('environment\\model.pth') )
+        mask.load_state_dict( torch.load('environment\\mask.pth') )
 
     criterion, optimizer = create_criterion_optimizer(model)
 
-    train(args['epochs'], train_loader, valid_loader, optimizer, criterion, model, mask)
+    value = train(args['epochs'], train_loader, valid_loader, optimizer, criterion, model, mask)
+    if args['first_time']:
+        df = pd.DataFrame([a, a, value])
+        df.to_csv('wrapping\\pruned_layers.csv', sep=',')

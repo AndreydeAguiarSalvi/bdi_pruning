@@ -1,3 +1,4 @@
+#!C:\ProgramData\Anaconda3\envs\yolo python
 import numpy as np
 import pandas as pd
 import torch.nn as nn
@@ -9,9 +10,9 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 
 
-def create_loaders(which_dataset='CIFAR'):
+def create_loaders(which_dataset='CIFAR', is_train=True, is_valid=True, is_test=True):
     train_loader, valid_loader, test_loader, classes = None, None, None, None
-
+    train_transform, test_transform, train_set, valid_set, test_set = None, None, None, None, None
     if which_dataset == 'CIFAR':
         # Data Augmentation
         train_transform = transforms.Compose([
@@ -44,29 +45,31 @@ def create_loaders(which_dataset='CIFAR'):
         train_idx, valid_idx = indices[split:], indices[:split]
         train_sampler = SubsetRandomSampler(train_idx)
         valid_sampler = SubsetRandomSampler(valid_idx)
-
-        train_loader = DataLoader(
-            train_set, batch_size=64,
-            num_workers=4,
-            sampler=train_sampler
-        )
-        valid_loader = DataLoader(
-            valid_set, batch_size=64,
-            num_workers=4,
-            sampler=valid_sampler
-        )
-        test_loader = DataLoader(
-            test_set, batch_size=64,
-            num_workers=4
-        )
+            
+        if is_train:
+            train_loader = DataLoader(
+                train_set, batch_size=64,
+                num_workers=4,
+                sampler=train_sampler
+            )
+        if is_valid: 
+            valid_loader = DataLoader(
+                valid_set, batch_size=64,
+                num_workers=4,
+                sampler=valid_sampler
+            )
+        if is_test: 
+            test_loader = DataLoader(
+                test_set, batch_size=64,
+                num_workers=4
+            )
         # Classes names
         classes = ('plane', 'car', 'bird', 'cat',
                 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
     else:
-        # Data Augmentation
+        # Data Augmentation        
         train_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))
         ])
@@ -79,6 +82,7 @@ def create_loaders(which_dataset='CIFAR'):
             root='./data', train=True, 
             download=True, transform=train_transform
         )
+    
         valid_set = D.MNIST(
             root='./data', train=True, 
             download=True, transform=train_transform
@@ -94,21 +98,24 @@ def create_loaders(which_dataset='CIFAR'):
         train_idx, valid_idx = indices[split:], indices[:split]
         train_sampler = SubsetRandomSampler(train_idx)
         valid_sampler = SubsetRandomSampler(valid_idx)
-
-        train_loader = DataLoader(
-            train_set, batch_size=64,
-            num_workers=4,
-            sampler=train_sampler
-        )
-        valid_loader = DataLoader(
-            valid_set, batch_size=64,
-            num_workers=4,
-            sampler=valid_sampler
-        )
-        test_loader = DataLoader(
-            test_set, batch_size=64,
-            num_workers=4
-        )
+            
+        if is_train:
+            train_loader = DataLoader(
+                train_set, batch_size=64,
+                num_workers=4,
+                sampler=train_sampler
+            )
+        if is_valid:
+            valid_loader = DataLoader(
+                valid_set, batch_size=64,
+                num_workers=4,
+                sampler=valid_sampler
+            )
+        if is_test:
+            test_loader = DataLoader(
+                test_set, batch_size=64,
+                num_workers=4
+            )
         # Classes names
         classes = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9') 
     
@@ -157,17 +164,10 @@ def create_criterion_optimizer(model):
 
 def save_as_csv(model):
     layers = []
-    for i in range(model.conv1[0].weight[0]):
-        layers.append([0, i])
-    
-    for i in range(model.conv2[0].weight[0]):
-        layers.append([1, i])
-
-    for i in range(model.conv3[0].weight[0]):
-        layers.append([2, i])
-
-    for i in range(model.conv4[0].weight[0]):
-        layers.append([3, i])
+    layers.append(model.conv1[0].weight.shape[0])
+    layers.append(model.conv2[0].weight.shape[0])
+    layers.append(model.conv3[0].weight.shape[0])
+    layers.append(model.conv4[0].weight.shape[0])
     
     df = pd.DataFrame(layers)
-    df.to_csv('wrapping/model.csv', sep=',')
+    df.to_csv('wrapping\\model.csv', sep=',')
