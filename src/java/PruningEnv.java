@@ -7,10 +7,13 @@ import jason.jeditplugin.AgentSpeakSideKickParser;
 import java.util.logging.*;
 import java.util.stream.Collectors;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +24,7 @@ public class PruningEnv extends Environment {
 
     private Logger logger = Logger.getLogger("pruning."+PruningEnv.class.getName());
     
-    private Literal remainL = Literal.parseLiteral("remaingLayers");
+    private Literal remainingL = Literal.parseLiteral("remainingLayers");
     
     private Literal undoPruning = Literal.parseLiteral("decreasePerformance");
     
@@ -30,16 +33,17 @@ public class PruningEnv extends Environment {
     
     private Model model;
     private Process process;
-    private int wrongCounter = 0;
-    private int trainCounter = 0;
-    private int undoCounter = 0;
+    private int wrongPruning = 0;
     private double lastResult = 0.0;
+    
+    private double tau1 = 0.2;
+    private double tau2 = 0.07;
 
     /** Called before the MAS execution with the args informed in .mas2j */
     @Override
     public void init(String[] args) {
         super.init(args);
-        addPercept(this.remainL);
+        addPercept(this.remainingL);
         
         // Training the neural network by first time
         runCommand("python environment\\train.py --first_time");
@@ -47,9 +51,9 @@ public class PruningEnv extends Environment {
         // Loading the CNN configuration and instantiating Model
         CSV m = new CSV("wrapping\\model.csv");
         this.model = new Model(m);
+        this.lastResult = readPerformance("wrapping\\result.txt");
         
         CSV pruned = new CSV("wrapping\\pruned_layers.csv");
-        this.lastResult = Double.parseDouble(pruned.get(0)[2]);
     }
 
     @Override
@@ -65,34 +69,33 @@ public class PruningEnv extends Environment {
 
         	double perf = evaluatePerformance();
         	
-        	 if (this.wrongCounter == 10 && this.trainCounter == 5) { // After, just_end
+        	 if (this.wrongPruning >= 10 || this.model.size() == 0) { // After, just_end
          		System.out.println("\tverify_case: 4");
          		
-         	} else if (this.lastResult >= 0.7*perf) { // After, continue_pruning
+         	} else if ( (this.lastResult - perf) <= (this.tau2 * this.lastResult) ) { // After, continue_pruning
         		System.out.println("\tverify_case: 1");
         		this.lastResult = perf;
-        		addPercept(this.remainL);
+        		addPercept(this.remainingL);
         	
-        	} else if (this.wrongCounter == 10) { // after, train
+        	} else if (perf < this.tau1 * this.lastResult) { // after, train
         		System.out.println("\tcounter: verify_case: 3");
-        		addPercept(this.remainL);
+        		addPercept(this.remainingL);
         		addPercept(this.undoPruning);
         		addPercept(this.trainAgain);
         		
         	} else { // After, undo_prune
         		System.out.println("\tcounter: verify_case: 2");
-        		addPercept(this.remainL);
+        		addPercept(this.remainingL);
         		addPercept(this.undoPruning);
         	}
         	
         } else if (action.getFunctor().equals("train")) {
         	runCommand("python environment\\train.py");
-        	this.trainCounter++;
-        	this.undoCounter = 0;
-        	this.wrongCounter = 0;
+        	this.lastResult = readPerformance("wrapping\\result.txt");
+        	this.wrongPruning = 0;
+        	
         } else if (action.getFunctor().equals("undo_prune")) {
     		undoPrune();
-    		this.undoCounter++;
     		
         } else if (action.getFunctor().equals("just_end")) {
         	System.out.println("\tProcesso finalizado");
@@ -114,6 +117,29 @@ public class PruningEnv extends Environment {
         super.stop();
     }
     
+    public double readPerformance(String path) {
+    	String performance = "";
+    	double result;
+    	
+    	try(BufferedReader br = new BufferedReader(new FileReader(path))) {
+    	    StringBuilder sb = new StringBuilder();
+    	    String line = br.readLine();
+
+    	    while (line != null) {
+    	        sb.append(line);
+    	        sb.append(System.lineSeparator());
+    	        line = br.readLine();
+    	    }
+    	    performance = sb.toString();
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    	}
+    	
+    	result = Double.valueOf(performance);
+    	
+    	return result;
+    }
+    
     public void runCommand(String command) {
     	
     	try {
@@ -128,10 +154,16 @@ public class PruningEnv extends Environment {
     public void undoPrune() {
     	CSV pruned = new CSV("wrapping\\pruned_layers.csv");
     	
+    	// Removing from the list
     	String[] undo = pruned.getLast();
     	pruned.removeLast();
     	System.out.println("\t\t\tRemoving element: " + undo[0] + " - " + undo[1] + " - " + undo[2]);
     	pruned.save();
+    	
+    	// Re-inserting the layer in Model
+    	int layer = Integer.valueOf(undo[0]);
+    	int channel = Integer.valueOf(undo[1]);
+    	this.model.getLayer(layer).addChannel(channel);
     }
     
     public void prune() {
@@ -139,10 +171,10 @@ public class PruningEnv extends Environment {
     	String[] pruned_channel = new String[3];
     	pruned_channel[0] = result[0]; pruned_channel[1] = result[1]; pruned_channel[2] = "0";
     	if (pruned_channel[1].equals("-1")) {
-    		this.wrongCounter++;
+    		this.wrongPruning++;
     	}
     	else {
-    		this.wrongCounter = 0;
+    		this.wrongPruning = 0;
     		CSV pruned = new CSV("wrapping\\pruned_layers.csv");
     		pruned.add(pruned_channel);
         	pruned.save();
@@ -176,7 +208,9 @@ public class PruningEnv extends Environment {
     	}
     	
     	public int size() {
-    		return layers.size();
+    		int size = 0;
+    		for (Layer l : this.layers) size += l.size();
+    		return size;
     	}
     	
     	public String[] choose_channel() {
@@ -211,11 +245,12 @@ public class PruningEnv extends Environment {
      */
     class Layer {
     	ArrayList<Channel> channels = new ArrayList();
+    	private int maxChooses = 5;
     	
     	public Layer (int nChannels) {
     		for (int i = 0; i < nChannels; i++) {
-    			Channel it = new Channel();
-    			this.channels.add(it);
+    			Channel ch = new Channel();
+    			this.channels.add(ch);
     		}
     	}
     	
@@ -231,8 +266,13 @@ public class PruningEnv extends Environment {
     		if (size() == 0) return -1;
     		int channel = ThreadLocalRandom.current().nextInt(0, size());
     		this.channels.get(channel).choose();
-    		if (this.channels.get(channel).timesChoosen == 2) this.channels.remove(channel);
+    		if (this.channels.get(channel).timesChoosen == this.maxChooses) this.channels.remove(channel);
     		return channel;
+    	}
+    	
+    	public void addChannel(int index) {
+    		Channel ch = new Channel();
+    		this.channels.add(index, ch);
     	}
     }
     
