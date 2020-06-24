@@ -1,4 +1,4 @@
-#!C:\ProgramData\Anaconda3\envs\yolo python
+import torch
 import numpy as np
 import pandas as pd
 import torch.nn as nn
@@ -60,7 +60,7 @@ def create_loaders(which_dataset='CIFAR', is_train=True, is_valid=True, is_test=
         if is_test: 
             test_loader = DataLoader(
                 test_set, batch_size=64,
-                num_workers=4
+                num_workers=4, shuffle=False
             )
         # Classes names
         classes = ('plane', 'car', 'bird', 'cat',
@@ -113,7 +113,7 @@ def create_loaders(which_dataset='CIFAR', is_train=True, is_valid=True, is_test=
         if is_test:
             test_loader = DataLoader(
                 test_set, batch_size=64,
-                num_workers=4
+                num_workers=4, shuffle=False
             )
         # Classes names
         classes = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9') 
@@ -121,18 +121,18 @@ def create_loaders(which_dataset='CIFAR', is_train=True, is_valid=True, is_test=
     return train_loader, valid_loader, test_loader, classes
 
 
-def plot_images(images, cls_true, label_names, undo_augment=True, cls_pred=None, save=False, params=None):
+def plot_images(images, cls_true, label_names, img_name, undo_augment=True, cls_pred=None, save=False, params=None):
     """
         Adapted from https://github.com/Hvass-Labs/TensorFlow-Tutorials/
     """
-    is_CIFAR = '0' in label_names
+    is_MNIST = '0' in label_names
     if undo_augment:
-        if not is_CIFAR: # Dataset is MNIST
+        if is_MNIST: # Dataset is MNIST
             images = images * .5 + .5
             images = images.numpy()
         else: # Dataset is CIFAR-10
             images = images * .3081 + .1307
-            images = images.numpy().transpose(1, 2, 0)
+            images = images.numpy().transpose(0, 2, 3, 1)
         fig, axes = plt.subplots(3, 3)
 
     for i, ax in enumerate(axes.flat):
@@ -144,7 +144,8 @@ def plot_images(images, cls_true, label_names, undo_augment=True, cls_pred=None,
         if cls_pred is None:
             xlabel = "{0} ({1})".format(cls_true_name, cls_true[i])
         else:
-            cls_pred_name = label_names[cls_pred[i]]
+            y = torch.argmax(cls_pred[i])
+            cls_pred_name = label_names[y]
             xlabel = "True: {0}\nPred: {1}".format(
                 cls_true_name, cls_pred_name
             )
@@ -152,7 +153,7 @@ def plot_images(images, cls_true, label_names, undo_augment=True, cls_pred=None,
         ax.set_xticks([])
         ax.set_yticks([])
 
-    if save: plt.savefig('wrapping/inference.png', transparent=True )
+    if save: plt.savefig(img_name, transparent=True )
     else: plt.show()
 
 
