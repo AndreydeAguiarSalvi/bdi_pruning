@@ -149,6 +149,7 @@ public class PruningEnv extends Environment {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+	    
     }
         
     public void undoPrune() {
@@ -164,6 +165,7 @@ public class PruningEnv extends Environment {
     	int layer = Integer.valueOf(undo[0]);
     	int channel = Integer.valueOf(undo[1]);
     	this.model.getLayer(layer).addChannel(channel);
+	runCommand("python environment\\update_mask.py");
     }
     
     public void prune() {
@@ -179,6 +181,7 @@ public class PruningEnv extends Environment {
     		pruned.add(pruned_channel);
         	pruned.save();
     	}
+	runCommand("python environment\\update_mask.py");
     }
     
     public double evaluatePerformance() {
