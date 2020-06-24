@@ -9,6 +9,7 @@ from utils import create_loaders, create_criterion_optimizer, save_as_csv
 def train(n_epochs, train_loader, valid_loader, optimizer, criterion, model, mask):
     running_loss = []
     best_fitness = np.Inf
+    scheduler = create_scheduler(args, optimizer)
     for epoch in range(n_epochs):
         train_loss = 0.0
         model.train()
@@ -27,16 +28,21 @@ def train(n_epochs, train_loader, valid_loader, optimizer, criterion, model, mas
             loss.backward()
             optimizer.step()
 
+        scheduler.step()
+
         train_loss /= len(train_loader)
         valid_loss = validation(valid_loader, model, mask, criterion)
         print(f"Epoch: {epoch}  Train Loss: {train_loss}  Valid Loss: {valid_loss}")
-        running_loss.append(train_loss, valid_loss)
+        running_loss.append(epoch, train_loss, valid_loss)
 
         # Saving last model
         if valid_loss < best_fitness:
-            torch.save( model, 'environment\\model.pth' )
-            torch.save( model, 'environment\\mask.pth' )
+            torch.save( model.state_dict(), 'environment\\model.pth' )
+            torch.save( mask.state_dict(), 'environment\\mask.pth' )
             best_fitness = valid_loss
+
+    df = pd.DataFrame(running_loss, columns=['epoch', 'train_loss', 'valid_loss'])
+    df.to_csv('environment\\results.csv', sep=',')
     
     return best_fitness
 
@@ -47,9 +53,10 @@ def validation(valid_loader, model, mask, criterion):
     model.eval()
     with torch.no_grad():
         for images, labels in valid_loader:
+            images, labels = images.to(device), labels.to(device)
             apply_mask(model, mask)
             outputs = model(images)
-            valid_loss += criterion(outputs, labels)
+            valid_loss += criterion(outputs, labels).item()
 
         valid_loss /= len(valid_loader)
 
@@ -73,8 +80,8 @@ if __name__ == '__main__':
     mask = create_mask(model)
 
     if args['first_time']:
-        torch.save(model, 'environment\\initial_model.pth')
-        torch.save(mask, 'environment\\initial_mask.pth')
+        torch.save(model.state_dict(), 'environment\\initial_model.pth')
+        torch.save(mask.state_dict(), 'environment\\initial_mask.pth')
         save_as_csv(model)
     else:
         model.load_state_dict( torch.load('environment\\model.pth') )
@@ -83,6 +90,7 @@ if __name__ == '__main__':
     criterion, optimizer = create_criterion_optimizer(model)
 
     value = train(args['epochs'], train_loader, valid_loader, optimizer, criterion, model, mask)
-    if args['first_time']:
-        df = pd.DataFrame([a, a, value])
-        df.to_csv('wrapping\\pruned_layers.csv', sep=',')
+    
+    f = open('wrapping\\result.txt', 'w')
+    print(value, file=f, end='')
+    f.close()

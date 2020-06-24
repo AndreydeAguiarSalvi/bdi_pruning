@@ -1,4 +1,6 @@
+import torch
 import torch.nn as nn
+from copy import deepcopy
 import torch.nn.functional as F
 from collections import OrderedDict 
 
@@ -40,9 +42,16 @@ class MNIST_Model(nn.Module):
             ])
         )
         self.pool = nn.AdaptiveAvgPool2d((10, 10))
-        self.linear = nn.Sequential(
+        self.linear1 = nn.Sequential(
             OrderedDict([
-                ('mlp', nn.Linear(1600, 10)),
+                ('mlp', nn.Linear(16*10*10, 512)),
+                ('function', nn.LeakyReLU())
+            ])
+        )
+        self.drop = nn.Dropout()
+        self.linear2 = nn.Sequential(
+            OrderedDict([
+                ('mlp', nn.Linear(512, 10)),
                 ('function', nn.ReLU())
             ])
         )
@@ -54,8 +63,10 @@ class MNIST_Model(nn.Module):
         x = self.conv4(x)
         x = self.conv5(x)
         x = self.pool(x)
-        x = self.linear(x.view(-1, 16*10*10))
-    
+        x = self.linear1(x.view(-1, 16*10*10))
+        x = self.drop(x)
+        x = self.linear2(x)
+        
         return x
 
 '''
@@ -96,9 +107,16 @@ class CIFAR_Model(nn.Module):
             ])
         )
         self.pool = nn.AdaptiveAvgPool2d((10, 10))
-        self.linear = nn.Sequential(
+        self.linear1 = nn.Sequential(
             OrderedDict([
-                ('mlp', nn.Linear(1600, 10)),
+                ('mlp', nn.Linear(16*10*10, 512)),
+                ('function', nn.LeakyReLU())
+            ])
+        )
+        self.drop = nn.Dropout()
+        self.linear2 = nn.Sequential(
+            OrderedDict([
+                ('mlp', nn.Linear(512, 10)),
                 ('function', nn.ReLU())
             ])
         )
@@ -110,6 +128,8 @@ class CIFAR_Model(nn.Module):
         x = self.conv4(x)
         x = self.conv5(x)
         x = self.pool(x)
-        x = self.linear(x.view(-1, 16*10*10))
-    
+        x = self.linear1(x.view(-1, 16*10*10))
+        x = self.drop(x)
+        x = self.linear2(x)
+
         return x

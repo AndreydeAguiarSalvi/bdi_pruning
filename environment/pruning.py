@@ -13,7 +13,7 @@ def create_mask(model): # Create mask as Lottery Tickets Hypothesis
     from collections import OrderedDict
     mask = OrderedDict()
     for name, param in model.named_parameters():
-        if 'conv' in name and 'bias' not in name:
+        if 'bias' not in name and 'linear' not in name:
             name_ = name.replace('.', '-') # ParameterDict and ModuleDict does not allows '.' as key
             mask[name_] = nn.Parameter( torch.ones_like(param), requires_grad = False )
 
@@ -21,8 +21,10 @@ def create_mask(model): # Create mask as Lottery Tickets Hypothesis
 
 
 def prune_mask(mask, index):
-    mask.weight[index] = nn.Parameter( torch.zeros_like(mask[index]), requires_grad=False )
+    dvc = (next(mask.parameters()).device)
+    mask.weight[index] = nn.Parameter( torch.zeros_like(mask[index], device=dvc), requires_grad=False )
 
 
 def unprune_mask(mask, index):
-    mask.weight[index] = nn.Parameter( torch.ones_like(mask[index]), requires_grad=False )
+    dvc = (next(mask.parameters()).device)
+    mask.weight[index] = nn.Parameter( torch.ones_like(mask[index], device=dvc), requires_grad=False )

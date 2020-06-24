@@ -17,7 +17,6 @@ def create_loaders(which_dataset='CIFAR', is_train=True, is_valid=True, is_test=
         # Data Augmentation
         train_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((.5, .5, .5), (.5, .5, .5))
         ])
@@ -122,18 +121,19 @@ def create_loaders(which_dataset='CIFAR', is_train=True, is_valid=True, is_test=
     return train_loader, valid_loader, test_loader, classes
 
 
-def plot_images(images, cls_true, label_names, cls_pred=None, save=False, params=None):
+def plot_images(images, cls_true, label_names, undo_augment=True, cls_pred=None, save=False, params=None):
     """
         Adapted from https://github.com/Hvass-Labs/TensorFlow-Tutorials/
     """
     is_CIFAR = '0' in label_names
-    if not is_CIFAR: # Dataset is MNIST
-        images = images * .5 + .5
-        images = images.numpy()
-    else: # Dataset is CIFAR-10
-        images = images * .3081 + .1307
-        images = images.numpy().transpose(1, 2, 0)
-    fig, axes = plt.subplots(3, 3)
+    if undo_augment:
+        if not is_CIFAR: # Dataset is MNIST
+            images = images * .5 + .5
+            images = images.numpy()
+        else: # Dataset is CIFAR-10
+            images = images * .3081 + .1307
+            images = images.numpy().transpose(1, 2, 0)
+        fig, axes = plt.subplots(3, 3)
 
     for i, ax in enumerate(axes.flat):
         # plot img
@@ -158,8 +158,15 @@ def plot_images(images, cls_true, label_names, cls_pred=None, save=False, params
 
 def create_criterion_optimizer(model):
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=0.008, momentum=0.9, weight_decay=1e-8)
     return criterion, optimizer
+
+
+def create_scheduler(args, optimizer):
+    milestones = [int(args['epochs'] * .6), int(args['epochs'] * .9)]
+    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones= milestones, gamma=.9)
+
+    return scheduler
 
 
 def save_as_csv(model):

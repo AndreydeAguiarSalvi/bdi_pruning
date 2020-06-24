@@ -13,10 +13,10 @@ if __name__ == '__main__':
     
     if args['dataset'] == 'CIFAR':
         model = CIFAR_Model()
-        train_loader, valid_loader, _, _ = create_loaders(is_train=False, is_valid=True, is_test=False)
+        _, valid_loader, _, _ = create_loaders(is_train=False, is_valid=True, is_test=False)
     else:
         model = MNIST_Model()
-        train_loader, valid_loader, _, _ = create_loaders(which_dataset='MNIST', is_train=False, is_valid=True, is_test=False)
+        _, valid_loader, _, _ = create_loaders(which_dataset='MNIST', is_train=False, is_valid=True, is_test=False)
 
     mask = create_mask(model)
     model.load_state_dict( torch.load('environment\\model.pth') )
@@ -30,7 +30,7 @@ if __name__ == '__main__':
         for images, labels in valid_loader:
             apply_mask(model, mask)
             outputs = model(images)
-            valid_loss += criterion(outputs, labels)
+            valid_loss += criterion(outputs, labels).item()
 
         valid_loss /= len(valid_loader)
 
