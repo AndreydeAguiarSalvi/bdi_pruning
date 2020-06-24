@@ -129,7 +129,7 @@ def plot_images(images, cls_true, label_names, img_name, undo_augment=True, cls_
     if undo_augment:
         if is_MNIST: # Dataset is MNIST
             images = images * .5 + .5
-            images = images.numpy()
+            images = images.numpy().transpose(0, 2, 3, 1)
         else: # Dataset is CIFAR-10
             images = images * .3081 + .1307
             images = images.numpy().transpose(0, 2, 3, 1)
