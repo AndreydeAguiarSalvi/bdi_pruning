@@ -8,6 +8,6 @@ This repository contains the source code of my work for the discipline.
 The objective of this work is to carry out Channel-wise pruning of convolutional neural networks, using the Jason and PyTorch frameworks.
 
 ## Requirements
-* (Jason)[http://jason.sourceforge.net/mini-tutorial/eclipse-plugin/]
-* (Anaconda Environment)[https://docs.anaconda.com/anaconda/install/]
-* (PyTorch)[https://pytorch.org/]
+* [Jason](http://jason.sourceforge.net/mini-tutorial/eclipse-plugin/)
+* [Anaconda Environment](https://docs.anaconda.com/anaconda/install/)
+* [PyTorch](https://pytorch.org/)
