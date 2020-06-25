@@ -146,7 +146,7 @@ def plot_images(images, cls_true, label_names, img_name, undo_augment=True, cls_
         else:
             y = torch.argmax(cls_pred[i])
             cls_pred_name = label_names[y]
-            xlabel = "True: {0}\nPred: {1}".format(
+            xlabel = "{0} | {1}".format(
                 cls_true_name, cls_pred_name
             )
         ax.set_xlabel(xlabel)
