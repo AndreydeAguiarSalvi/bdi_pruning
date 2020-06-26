@@ -34,7 +34,8 @@ public class PruningEnv extends Environment {
     private Model model;
     private Process process;
     private int wrongPruning = 0;
-    private double lastResult = 0.0;
+    private double lastTrainedResult = 0.0;
+    private double lastPrunedResult = 0.0;
     
     private double tau1 = 0.2;
     private double tau2 = 0.07;
@@ -51,7 +52,8 @@ public class PruningEnv extends Environment {
         // Loading the CNN configuration and instantiating Model
         CSV m = new CSV("wrapping\\model.csv");
         this.model = new Model(m);
-        this.lastResult = readPerformance("wrapping\\result.txt");
+        this.lastTrainedResult = readPerformance("wrapping\\result.txt");
+	this.lastPrunedResult = this.lastTrainedResult
         
         CSV pruned = new CSV("wrapping\\pruned_layers.csv");
     }
@@ -72,12 +74,12 @@ public class PruningEnv extends Environment {
         	 if (this.wrongPruning >= 10 || this.model.size() == 0) { // After, just_end
          		System.out.println("\tverify_case: 4");
          		
-         	} else if ( (this.lastResult - perf) <= (this.tau2 * this.lastResult) ) { // After, continue_pruning
+         	} else if ( (this.lastPrunedResult - perf) <= (this.tau2 * this.lastPrunedResult) ) { // After, continue_pruning
         		System.out.println("\tverify_case: 1");
-        		this.lastResult = perf;
+        		this.lastPrunedResult = perf;
         		addPercept(this.remainingL);
         	
-        	} else if (perf < this.tau1 * this.lastResult) { // after, train
+        	} else if (perf < this.tau1 * this.lastTrainedResult) { // after, train
         		System.out.println("\tcounter: verify_case: 3");
         		addPercept(this.remainingL);
         		addPercept(this.undoPruning);
@@ -91,7 +93,8 @@ public class PruningEnv extends Environment {
         	
         } else if (action.getFunctor().equals("train")) {
         	runCommand("python environment\\train.py");
-        	this.lastResult = readPerformance("wrapping\\result.txt");
+        	this.lastTrainedResult = readPerformance("wrapping\\result.txt");
+		this.lastPrunedResult = this.lastTrainedResult
         	this.wrongPruning = 0;
         	
         } else if (action.getFunctor().equals("undo_prune")) {
