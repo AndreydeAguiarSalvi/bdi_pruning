@@ -167,7 +167,7 @@ public class PruningEnv extends Environment {
     	// Re-inserting the layer in Model
     	int layer = Integer.valueOf(undo[0]);
     	int channel = Integer.valueOf(undo[1]);
-    	this.model.getLayer(layer).addChannel(channel);
+    	//this.model.getLayer(layer).addChannel(channel);
 	runCommand("python environment\\update_mask.py");
     }
     
